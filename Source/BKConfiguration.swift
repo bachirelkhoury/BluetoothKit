@@ -34,7 +34,7 @@ public class BKConfiguration {
     
     /// The UUID for the service used to send data. This should be unique to your applications.
     public let dataServiceUUID: CBUUID
-    
+
     /// The UUID for the characteristic used to send data. This should be unique to your application.
     public var dataServiceCharacteristicUUID: CBUUID
     
@@ -43,12 +43,11 @@ public class BKConfiguration {
     
     /// Data used to indicate that a transfer was cancellen when communicating.
     public var dataCancelledMark: NSData
-    
-    internal var serviceUUIDs: [CBUUID] {
-        let serviceUUIDs = [ dataServiceUUID ]
-        return serviceUUIDs
-    }
-    
+
+    public let serviceUUIDs: [CBUUID]
+    public let characteristicUUIDs: [CBUUID]
+
+
     // MARK: Initialization
 
     public init(dataServiceUUID: NSUUID, dataServiceCharacteristicUUID: NSUUID) {
@@ -56,13 +55,37 @@ public class BKConfiguration {
         self.dataServiceCharacteristicUUID = CBUUID(NSUUID: dataServiceCharacteristicUUID)
         endOfDataMark = "EOD".dataUsingEncoding(NSUTF8StringEncoding)!
         dataCancelledMark = "COD".dataUsingEncoding(NSUTF8StringEncoding)!
+
+        serviceUUIDs = [self.dataServiceUUID]
+        characteristicUUIDs = [self.dataServiceCharacteristicUUID]
     }
-    
-    // MARK Functions
-    
+
+    public init(dataServiceUUID: String, dataServiceCharacteristicUUID: String) {
+
+        self.dataServiceUUID = CBUUID(string: dataServiceUUID)
+        self.dataServiceCharacteristicUUID = CBUUID(string: dataServiceCharacteristicUUID)
+        endOfDataMark = "EOD".dataUsingEncoding(NSUTF8StringEncoding)!
+        dataCancelledMark = "COD".dataUsingEncoding(NSUTF8StringEncoding)!
+
+        serviceUUIDs = [self.dataServiceUUID]
+        characteristicUUIDs = [self.dataServiceCharacteristicUUID]
+    }
+
+    public init(dataServiceUUIDs: [String], dataServiceCharacteristicUUIDs: [String]) {
+
+        endOfDataMark = "EOD".dataUsingEncoding(NSUTF8StringEncoding)!
+        dataCancelledMark = "COD".dataUsingEncoding(NSUTF8StringEncoding)!
+
+        serviceUUIDs = dataServiceUUIDs.map{ CBUUID(string: $0) }
+        characteristicUUIDs = dataServiceCharacteristicUUIDs.map { CBUUID(string: $0) }
+
+        self.dataServiceUUID = serviceUUIDs[0]
+        self.dataServiceCharacteristicUUID = characteristicUUIDs[0]
+    }
+
     internal func characteristicUUIDsForServiceUUID(serviceUUID: CBUUID) -> [CBUUID] {
         if serviceUUID == dataServiceUUID {
-            return [ dataServiceCharacteristicUUID ]
+            return characteristicUUIDs
         }
         return []
     }

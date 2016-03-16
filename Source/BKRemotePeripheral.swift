@@ -145,18 +145,20 @@ public class BKRemotePeripheral: BKCBPeripheralDelegate, Equatable {
     // MARK: Private Functions
     
     private func handleReceivedData(receivedData: NSData) {
-        if receivedData.isEqualToData(configuration!.endOfDataMark) {
-            if let finalData = data {
-                delegate?.remotePeripheral(self, didSendArbitraryData: finalData)
-            }
-            data = nil
-            return
-        }
-        if let existingData = data {
-            existingData.appendData(receivedData)
-            return
-        }
-        data = NSMutableData(data: receivedData)
+        delegate?.remotePeripheral(self, didSendArbitraryData: receivedData)
+
+//        if receivedData.isEqualToData(configuration!.endOfDataMark) {
+//            if let finalData = data {
+//                delegate?.remotePeripheral(self, didSendArbitraryData: finalData)
+//            }
+//            data = nil
+//            return
+//        }
+//        if let existingData = data {
+//            existingData.appendData(receivedData)
+//            return
+//        }
+//        data = NSMutableData(data: receivedData)
     }
     
     // MARK: BKCBPeripheralDelegate
@@ -181,6 +183,7 @@ public class BKRemotePeripheral: BKCBPeripheralDelegate, Equatable {
         if service.UUID == configuration!.dataServiceUUID {
             if let dataCharacteristic = service.characteristics?.filter({ $0.UUID == configuration!.dataServiceCharacteristicUUID }).last {
                 peripheral.setNotifyValue(true, forCharacteristic: dataCharacteristic)
+                peripheral.readValueForCharacteristic(dataCharacteristic)
             }
         }
         // TODO: Consider what to do with characteristics from additional services.
@@ -188,7 +191,11 @@ public class BKRemotePeripheral: BKCBPeripheralDelegate, Equatable {
     
     internal func peripheral(peripheral: CBPeripheral, didUpdateValueForCharacteristic characteristic: CBCharacteristic, error: NSError?) {
         if characteristic.UUID == configuration!.dataServiceCharacteristicUUID {
-            handleReceivedData(characteristic.value!)
+            if let value = characteristic.value {
+                handleReceivedData(value)
+            }else{
+                handleReceivedData(NSData())
+            }
         }
         // TODO: Consider what to do with new values for characteristics from additional services.
     }
